@@ -1,0 +1,4 @@
+# Put this file in the same dir as the xpi on your apache webserver to force
+# the .xpi type to be installed by firefox (not downloaded)
+
+AddType application/x-xpinstall .xpi

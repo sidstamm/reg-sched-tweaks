@@ -1,0 +1,8 @@
+TABLE TD.wr100 , TABLE TD.wr90 {
+  background-color: blue !important;
+}
+
+TABLE TD.wr100::after {
+  content: " - TWEAKED" !important;
+}
+

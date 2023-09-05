@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "{regschedtweaks@rose-hulman.edu}": {
+      "updates": [
+        {
+          "version": "1.0",
+          "update_link": "https://www.rose-hulman.edu/~stammsl/rst/reg-sched-tweaks-1.0.xpi"
+        }
+      ]
+    }
+  }
+}
