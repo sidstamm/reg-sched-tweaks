@@ -10,6 +10,7 @@
  *  > removed focus requirement to activate lookup buttons
  *     -- executed once, on load.  Will not persist.
  *  > added ability to press "enter" in search form to trigger username, room, or course lookup
+ *  > added prev/next quarter navigation links when viewing all sections of a class in a given term
  *
  * @version 1.0.1 - 5/29/2024
  * @author Sid Stamm <stammsl@rose-hulman.edu>
@@ -114,6 +115,46 @@ if (QS("select#id6")) {
   selx.parentNode.insertBefore(div, selx);
 }
 
+function prevQtr(qtrstr) {
+  let yr = qtrstr.substr(0,4);
+  let qtr = qtrstr.substr(4);
+  qtr = parseInt(qtr) - 10;
+  if (qtr < 10) { qtr = "40"; yr = parseInt(yr) - 1; }
+  return `${yr}${qtr}`;
+}
+function nextQtr(qtrstr) {
+  let yr = qtrstr.substr(0,4);
+  let qtr = qtrstr.substr(4);
+  qtr = parseInt(qtr) + 10;
+  if (qtr > 40) { qtr = "10"; yr = parseInt(yr) + 1; }
+  return `${yr}${qtr}`;
+}
+
+/* Tweaks for COURSE id lookup */
+if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
+
+  // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
+  setlink = QS("tbody > tr > td.bw70 > a")["href"];
+  console.log("Set link: " + setlink);
+  // parse it
+  usp = new URLSearchParams(setlink);
+
+  leftlink = document.createElement("a");
+  leftlink.setAttribute("href", `?type=Course&termcode=${prevQtr(usp.get("termcode"))}&view=tgrid&id=${usp.get("id")}`);
+  leftlink.textContent = "[ << Previous Quarter ]";
+  leftlink.classList.add("tweaked");
+  rightlink = document.createElement("a");
+  rightlink.setAttribute("href", `?type=Course&termcode=${nextQtr(usp.get("termcode"))}&view=tgrid&id=${usp.get("id")}`);
+  rightlink.textContent = "[ Next Quarter >> ]";
+  rightlink.classList.add("tweaked");
+
+  // insert these things just under the "[set grid]" link.
+  let insert_target = QS("tbody > tr > td.bw70");
+  insert_target.appendChild(document.createElement("br"));
+  insert_target.appendChild(leftlink);
+  insert_target.appendChild(rightlink);
+
+}
 
 /* Tweaks for main page only */
 if(QS("input[name=id1]")) {

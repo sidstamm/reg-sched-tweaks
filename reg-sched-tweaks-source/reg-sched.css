@@ -6,6 +6,6 @@ TABLE TD.wr100::after {
   content: " - TWEAKED" !important;
 }
 
-INPUT[type=button] {
+.tweaked {
   background-color: #ccf;
 }
