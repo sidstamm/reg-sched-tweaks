@@ -127,6 +127,27 @@ if(QS("input[name=id1]")) {
   if(QS("input[name=lnameid]")) { fixEnter("lnameid", "lnamebt"); }
   if(QS("input[name=id4]")) { fixEnter("id4", "bt4"); }
   if(QS("input[name=id5]")) { fixEnter("id5", "bt5"); }
+
+  // add "me" option (push to store your username, push to use it)
+  btn = document.createElement("input");
+  btn.setAttribute("type", "button");
+  btn.setAttribute("value", "+");
+  btn.setAttribute("title", "click to set a value that will be remembered when you visit this page");
+  btn.setAttribute("onClick",
+    `localStorage.setItem("regsched.Me", prompt("what is your rhit username?"))`);
+  QS("input[name=bt1]").insertAdjacentElement("afterend", btn);
+
+  btn = document.createElement("input");
+  btn.setAttribute("type", "button");
+  btn.setAttribute("value", "me");
+  btn.setAttribute("title", localStorage.getItem("regsched.Me"));
+  let inp = QS("input[name=id1]");
+  let inp_btn = QS("input[name=bt1]");
+  btn.setAttribute("onClick",
+    `document.querySelector("input[name=id1]").value = localStorage.getItem("regsched.Me");
+     document.querySelector("input[name=bt1]").click();`);
+  QS("input[name=bt1]").insertAdjacentElement("afterend", btn);
+
 }
 
 
