@@ -9,13 +9,25 @@
  *     -- add a button to show/hide unselected names.
  *  > removed focus requirement to activate lookup buttons
  *     -- executed once, on load.  Will not persist.
- *  > added ability to press "enter" in search form to trigger room or course lookup
+ *  > added ability to press "enter" in search form to trigger username, room, or course lookup
  *
  * @version 1.0 - 5/30/2023
  * @author Sid Stamm <stammsl@rose-hulman.edu>
  ***************************/
 
 const TITLE = "TWEAKED";
+
+const GROUP_SELECTION_INSTRUCTIONS = `
+<div style="margin:5px;">
+<span style='color:#00c; font-weight:bold;'>TWEAKED options:</span><br/>
+<p>This version of the schedule lookup page supports a few new search/add features (CASE SENSITIVE):</p>
+<ul>
+<li><tt>add</tt> button: type something in the text box, then click "add" to select all matching items in the list.</li>
+<li><tt>find</tt> button: type something in the text box, then click "find" to scroll to the first person matching entered text.</li>
+<li><tt>toggle unselected</tt> button: toggle view of giant list to either show or hide unselected individuals.
+</ul>
+</div>
+`;
 
 // some helpers
 let QS = (sel) => document.querySelector(sel);
@@ -26,6 +38,10 @@ let QSA = (sel) => document.querySelectorAll(sel);
  */
 if (QS("select#id6")) {
   let selx = QS("select#id6");
+  
+  // add some instructions
+  document.querySelector("table.datadisplaytable > tbody > tr > td.bw80")
+          .insertAdjacentHTML('beforeend', GROUP_SELECTION_INSTRUCTIONS);
 
   /** This is the original function, but content scripts cannot inject it.
   var sel = (nm) => {
@@ -103,9 +119,12 @@ if(QS("input[name=id1]")) {
 
   // Fix enter key for room and courseid lookup submission
   function fixEnter(id, btn) {
+    console.log("Adding enter listener to id " + id)
     QS("input[name="+id+"]").addEventListener("keyup",
         (ev) => { if (ev.key == "Enter") { QS("input[name="+btn+"]").click(); }});
   }
+  if(QS("input[name=id1]")) { fixEnter("id1", "bt1"); }
+  if(QS("input[name=lnameid]")) { fixEnter("lnameid", "lnamebt"); }
   if(QS("input[name=id4]")) { fixEnter("id4", "bt4"); }
   if(QS("input[name=id5]")) { fixEnter("id5", "bt5"); }
 }
