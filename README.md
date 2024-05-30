@@ -5,6 +5,16 @@ An addon to make the schedule lookup page a little better.  More info coming soo
 
 ## Usage and Features
 
+### On the main lookup page
+
+### When viewing all sections of a class (schedule grid)
+
+### When viewing all sections of a class (roster)
+
+### When viewing a class (section) roster
+* A new "View All Sections" button is available to quickly navigate to seeing the roster for all sections of a given class.
+
+### On the "ad-hoc group schedules" page
 
 ## Development
 Some information about developing extensions and testing them is [here](https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/#testing-out-an-extension)

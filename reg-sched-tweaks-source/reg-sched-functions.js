@@ -11,8 +11,9 @@
  *     -- executed once, on load.  Will not persist.
  *  > added ability to press "enter" in search form to trigger username, room, or course lookup
  *  > added prev/next quarter navigation links when viewing all sections of a class in a given term
+ *  > added "View All Sections" to options when viewing roster for one section of a course.
  *
- * @version 1.0.1 - 5/29/2024
+ * @version 1.0.1 - 5/30/2024
  * @author Sid Stamm <stammsl@rose-hulman.edu>
  ***************************/
 
@@ -130,12 +131,32 @@ function nextQtr(qtrstr) {
   return `${yr}${qtr}`;
 }
 
-/* Tweaks for COURSE id lookup */
+/* Tweaks for COURSE ID (ONE section) lookup */
+if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: ")) {
+  // get parameters from URL.
+  usp = new URLSearchParams(window.location.href);
+
+  // if the current lookup is already all sections, don't do any more work.
+  if (usp.get("id").split("-").length > 1) {
+    allseclink = document.createElement("a");
+    allseclink.setAttribute("href", `?type=Roster&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id").split("-")[0]}`);
+    allseclink.textContent = "View All Sections";
+    allseclink.classList.add("tweaked");
+
+    // find the "[Set Grid]" link, attach new link to end of its containing cell
+    let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
+    target.appendChild(document.createTextNode("["));
+    target.appendChild(allseclink);
+    target.appendChild(document.createTextNode("]"));
+  }
+}
+
+/* Tweaks for COURSE (all sections) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
 
   // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
   setlink = QS("tbody > tr > td.bw70 > a")["href"];
-  console.log("Set link: " + setlink);
+  //console.log("Set link: " + setlink);
   // parse it
   usp = new URLSearchParams(setlink);
 
