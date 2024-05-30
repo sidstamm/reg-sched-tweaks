@@ -31,12 +31,21 @@ const GROUP_SELECTION_INSTRUCTIONS = `
 </div>
 `;
 
+const GET_PARAMS = new URLSearchParams(window.location.href);
+
 // some helpers
 let QS = (sel) => document.querySelector(sel);
 let QSA = (sel) => document.querySelectorAll(sel);
 
-// constructs a button with a map of attributes, a list of classes, and a click handler.
-function buttonMaker(attr_map, class_list, onClickHandler) {
+/**
+ * constructs a button with a map of attributes, a list of classes, and a click handler.
+ * 
+ * @param attr_map - OPTIONAL a dictionary of attributes to add to the button
+ * @param class_list - OPTIONAL an array of classes to add to the button
+ * @param onClickHandler - OPTIONAL an event handler to register with the button.
+ * @returns an HTMLElement instance of the button.
+ */
+function buttonMaker(attr_map={}, class_list=['tweaked'], onClickHandler=null) {
   let btn = document.createElement("input");
   btn.setAttribute("type", "button");
   for (const k in attr_map) { btn.setAttribute(k, attr_map[k]); }
@@ -47,12 +56,54 @@ function buttonMaker(attr_map, class_list, onClickHandler) {
   return btn;
 }
 
+function prevQtr(qtrstr) {
+  let yr = qtrstr.substr(0,4);
+  let qtr = qtrstr.substr(4);
+  qtr = parseInt(qtr) - 10;
+  if (qtr < 10) { qtr = "40"; yr = parseInt(yr) - 1; }
+  return `${yr}${qtr}`;
+}
+function nextQtr(qtrstr) {
+  let yr = qtrstr.substr(0,4);
+  let qtr = qtrstr.substr(4);
+  qtr = parseInt(qtr) + 10;
+  if (qtr > 40) { qtr = "10"; yr = parseInt(yr) + 1; }
+  return `${yr}${qtr}`;
+}
+
+/**
+ * Constructs a link element, which is optionally braced.
+ * 
+ * @param href - the hyperlink target
+ * @param text - the text content (clickable part) of the link
+ * @param braced - OPTIONAL whether or not to surround in non-clickable [ brackets ] (default = false)
+ * @param classes - OPTIONAL a list of classes for the link element
+ * @param attributes - OPTIONAL a dictionary of HTML attributes to add to the link
+ * @returns an HTMLElement either the link element or a span containing the braces and link
+ */
+function makeLink(href, text, braced=true, classes=['tweaked'], attributes={}) {
+    link = document.createElement("a");
+    link.setAttribute("href", href);
+    link.textContent = text;
+    for (let c of classes) { link.classList.add(c); }
+    for (let k in attributes) { link.setAttribute(k, attributes[k]); }
+    if (!braced) { return link; }
+
+    span = document.createElement("span");
+    span.appendChild(document.createTextNode("["))
+    span.appendChild(link);
+    span.appendChild(document.createTextNode("]"))
+    return span;
+}
+
+
+/************************ AD-HOC GROUP SCHEDULES VIEW ******************************** */
 /* Adds UI to select items in the "ad-hoc group schedule" thing.
  * Also adds show/hide unselected items.
  */
 if (QS("select#id6")) {
   let selx = QS("select#id6");
-  
+
   // add some instructions
   document.querySelector("table.datadisplaytable > tbody > tr > td.bw80")
           .insertAdjacentHTML('beforeend', GROUP_SELECTION_INSTRUCTIONS);
@@ -73,142 +124,118 @@ if (QS("select#id6")) {
   div.appendChild(txt);
 
   // create button for adding to the selected list
-  let btn = document.createElement("input");
-  btn.setAttribute("type", "button");
-  btn.value = "add";
-  btn.setAttribute("onclick",
-    `[...document.querySelector("#id6").querySelectorAll("option")]
-         .filter(e => e['label'].includes(document.querySelector("#seltext").value))
-         .forEach(e => {e.selected = true; e.scrollIntoView()});`
+  btn = buttonMaker(
+    {"name": "addbtn", "value":"add", "title":"Click to add all matching items"},
+    ['tweaked'],
+    (e) => {
+       [...document.querySelector("#id6").querySelectorAll("option")]
+       .filter(e => e['label'].includes(document.querySelector("#seltext").value))
+       .forEach(e => {e.selected = true; e.scrollIntoView()})
+    }
   );
   div.appendChild(btn);
 
   // also create button that will scroll to first match
-  btn = document.createElement("input");
-  btn.setAttribute("type", "button");
-  btn.value = "find";
-  btn.setAttribute("onclick",
-    `[...document.querySelector("#id6").querySelectorAll("option")]
-         .filter(e => e['label'].includes(document.querySelector("#seltext").value))[0]
-         .scrollIntoView();`
+  btn = buttonMaker(
+    {"name": "findbtn", "value":"find", "title":"Click to scroll to first match"},
+    ['tweaked'],
+    (e) => {
+       [...document.querySelector("#id6").querySelectorAll("option")]
+       .filter(e => e['label'].includes(document.querySelector("#seltext").value))[0]
+       .scrollIntoView()
+    }
   );
   div.appendChild(btn);
 
   // Create a button for showing/hiding the unselected things.
-  btn = document.createElement("input");
-  btn.setAttribute("type", "button");
-  btn.setAttribute("value", "toggle unselected");
-  btn.setAttribute("showUnselected", "yes");
-  btn.setAttribute("onclick",
-    `if (this.hasAttribute("showUnselected")) {
-         this.removeAttribute("showUnselected");
-       [...document.querySelector("#id6").querySelectorAll("option")]
-         .forEach(e => { if(e.selected) { e.removeAttribute("hidden"); }
-                         else { e.setAttribute("hidden", "true");} });
-     } else {
-         this.setAttribute("showUnselected","yes");
-       [...document.querySelector("#id6").querySelectorAll("option")]
-         .forEach(e => { e.removeAttribute("hidden"); });
-     }`
+  btn = buttonMaker(
+    {"name": "togglebtn", "value":"toggle unselected", "showUnselected": "yes", "title":"Click to show/hide unselected items"},
+    ['tweaked'],
+    (ev) => {
+        if (ev.target.hasAttribute("showUnselected")) {
+          ev.target.removeAttribute("showUnselected");
+          [...document.querySelector("#id6").querySelectorAll("option")]
+            .forEach(e => { if(e.selected) { e.removeAttribute("hidden"); }
+                            else { e.setAttribute("hidden", "true");} });
+        } else {
+          ev.target.setAttribute("showUnselected","yes");
+          [...document.querySelector("#id6").querySelectorAll("option")]
+            .forEach(e => { e.removeAttribute("hidden"); });
+        }
+    }
   );
   div.appendChild(btn);
 
   selx.parentNode.insertBefore(div, selx);
 }
 
-function prevQtr(qtrstr) {
-  let yr = qtrstr.substr(0,4);
-  let qtr = qtrstr.substr(4);
-  qtr = parseInt(qtr) - 10;
-  if (qtr < 10) { qtr = "40"; yr = parseInt(yr) - 1; }
-  return `${yr}${qtr}`;
-}
-function nextQtr(qtrstr) {
-  let yr = qtrstr.substr(0,4);
-  let qtr = qtrstr.substr(4);
-  qtr = parseInt(qtr) + 10;
-  if (qtr > 40) { qtr = "10"; yr = parseInt(yr) + 1; }
-  return `${yr}${qtr}`;
-}
-
-const GET_PARAMS = new URLSearchParams(window.location.href);
 
 /************************ ROSTER VIEW ******************************** */
 /* Tweaks for COURSE ID (ONE section, Roster View) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: ")) {
-  // get parameters from URL.
-  usp = new URLSearchParams(window.location.href);
+  // get parameters from URL.  //usp = new URL(window.location.href).searchParams;
+  // steal this in case the request was a POST and not a GET
+  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
+  seturl = new URL(setlink['href']);
+  seturl.searchParams.set("type", "Roster");
+  usp = seturl.searchParams;
 
   // find the "[Set Grid]" link; we will insert new links after it
   let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
 
-  // if the current lookup is already all sections, don't add the "all sections" link
+  // if the current lookup is not already all sections, add the "all sections" link
   if (usp.get("id").split("-").length > 1) {
-    allseclink = document.createElement("a");
-    allseclink.setAttribute("href", `?type=Roster&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id").split("-")[0]}`);
-    allseclink.textContent = "View All Sections";
-    allseclink.classList.add("tweaked");
-    target.appendChild(document.createTextNode("["));
+    let newurl = new URL(seturl);
+    newurl.searchParams.set("type","Roster");
+    newurl.searchParams.set("id", usp.get("id").split("-")[0]);
+    allseclink = makeLink(newurl, "View All Sections");
     target.appendChild(allseclink);
-    target.appendChild(document.createTextNode("]"));
   }
 
   // add "Schedule Grid view" button (type=Course)
-  schedulelink = document.createElement("a");
-  schedulelink.setAttribute("href", `?type=Course&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id")}`);
-  schedulelink.textContent = "Schedule Grid View";
-  schedulelink.classList.add("tweaked");
-  target.appendChild(document.createTextNode("["));
+  let newurl = new URL(seturl);
+  newurl.searchParams.set("type","Course");
+  schedulelink = makeLink(newurl, "Schedule Grid View");
   target.appendChild(schedulelink);
-  target.appendChild(document.createTextNode("]"));
 }
 
-/************************ ROSTER VIEW ******************************** */
+/************************ COURSE VIEW ******************************** */
 /* Tweaks for COURSE (all sections, Course Grid view) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
 
   // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
-  setlink = QS("tbody > tr > td.bw70 > a")["href"];
-  //console.log("Set link: " + setlink);
-  // parse it
-  usp = new URLSearchParams(setlink);
-
-  // find the "[Set Grid]" link; we will insert new links after it
-  let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
-
-  leftlink = document.createElement("a");
-  leftlink.setAttribute("href", `?type=Course&termcode=${prevQtr(usp.get("termcode"))}&view=tgrid&id=${usp.get("id")}`);
-  leftlink.textContent = "[ << Previous Quarter ]";
-  leftlink.classList.add("tweaked");
-  rightlink = document.createElement("a");
-  rightlink.setAttribute("href", `?type=Course&termcode=${nextQtr(usp.get("termcode"))}&view=tgrid&id=${usp.get("id")}`);
-  rightlink.textContent = "[ Next Quarter >> ]";
-  rightlink.classList.add("tweaked");
-
+  // steal this in case the request was a POST and not a GET
+  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
+  seturl = new URL(setlink['href']);
+  seturl.searchParams.set("type", "Course");
+  usp = seturl.searchParams;
 
   // add "Roster view" button (type=Roster)
-  rosterlink = document.createElement("a");
-  rosterlink.setAttribute("href", `?type=Roster&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id")}`);
-  rosterlink.textContent = "[ Roster View ]";
-  rosterlink.classList.add("tweaked");
+  newurl = new URL(seturl);
+  newurl.searchParams.set("type","Roster");
+  rosterlink = makeLink(newurl, "Roster View");
+
+  // create prev/next buttons
+  newurl = new URL(seturl);
+  newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
+  leftlink = makeLink(newurl, "<< Previous Quarter");
+  newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
+  rightlink = makeLink(newurl, "Next Quarter >>");
 
   // if the current lookup is not all sections, add the "all sections" link
   if (usp.get("id").split("-").length > 1) {
-    allseclink = document.createElement("a");
-    allseclink.setAttribute("href", `?type=Course&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id").split("-")[0]}`);
-    allseclink.textContent = "View All Sections";
-    allseclink.classList.add("tweaked");
-    target.appendChild(document.createTextNode("["));
-    target.appendChild(allseclink);
-    target.appendChild(document.createTextNode("]"));
+    newurl = new URL(seturl);
+    newurl.searchParams.set("id", newurl.searchParams.get("id").split("-")[0]);
+    allseclink = makeLink(newurl, "View All Sections");
+    setlink.parentNode.appendChild(allseclink);
   }
 
-  //target.appendChild(document.createElement("br"));
-  target.appendChild(rosterlink);
-  target.appendChild(leftlink);
-  target.appendChild(rightlink);
+  setlink.parentNode.appendChild(rosterlink);
+  setlink.parentNode.appendChild(leftlink);
+  setlink.parentNode.appendChild(rightlink);
 }
 
+/************************ MAIN PAGE ******************************** */
 /* Tweaks for main page only */
 if(QS("input[name=id1]")) {
 
