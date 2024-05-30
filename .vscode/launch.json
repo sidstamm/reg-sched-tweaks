@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch regsched tweaks",
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "keepProfileChanges": true,
+            "reloadOnChange": "${workspaceFolder}/reg-sched-tweaks-source/*",
+            "profile": "extension_debug",
+            "addonPath": "${workspaceFolder}/reg-sched-tweaks-source",
+            "url": "https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl"
+        }
+    ]
+}
