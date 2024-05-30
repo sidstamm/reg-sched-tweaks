@@ -3,6 +3,19 @@ An addon to make the schedule lookup page a little better.  More info coming soo
 
 ## Installation
 
+### CHROME:
+1. clone this git repo
+2. navigate to `chrome:extensions` in your browser
+3. enable developer mode
+4. click the "Load Unpacked" button
+5. navigate to the `reg-sched-tweaks-source` folder in this repo and select it.
+6. profit.  (Ignore the errors)
+
+### FIREFOX:
+1. go to [this web site](https://www.rose-hulman.edu/~stammsl/rst)
+2. Click on the latest version of the extension (ends with `.xpi`)
+3. Follow the prompts to install the xpi
+
 ## Usage and Features
 
 When installed, this extension modifies the schedule lookup page to have a pretty blue banner to let you know it's active.
