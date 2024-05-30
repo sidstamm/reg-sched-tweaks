@@ -12,14 +12,14 @@ When installed, this extension modifies the schedule lookup page to have a prett
 * You can hit "enter" in a text box to submit the relevant form.
 * Shortcut button for quickly looking up your own schedule.  There's a `+` button that allows you to store your own username in the browser. Clicking the `me` button next to the `+` submits a username search for whatever you stored.  The username is stored in your browser's localStorage (like a cookie) and will persist across visits to the site.
 
-
-### When viewing all sections of a class (course schedule grid)
+### When viewing class schedule (course schedule grid)
+* If viewing only one section, a link to view all sections is available
+* A link to view the class's roster (for one or many sections) is available
 * Previous and Next quarter links available to quickly see the schedule of all sections offered in adjacent quarters.
 
-### When viewing all sections of a class (roster view)
-
-### When viewing one section of a class (roster view)
-* A new "View All Sections" button is available to quickly navigate to seeing the roster for all sections of a given class.
+### When viewing a class roster
+* If viewing only one section, a link to view all sections is available
+* A link to view the class meeting schedule (for one or many sections) is available
 
 ### On the "ad-hoc group schedules" page
 * A new text box and three buttons (`add`, `find`, `toggle unselected`) allows quick selection of individuals in the list.

@@ -131,27 +131,40 @@ function nextQtr(qtrstr) {
   return `${yr}${qtr}`;
 }
 
-/* Tweaks for COURSE ID (ONE section) lookup */
+const GET_PARAMS = new URLSearchParams(window.location.href);
+
+/************************ ROSTER VIEW ******************************** */
+/* Tweaks for COURSE ID (ONE section, Roster View) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: ")) {
   // get parameters from URL.
   usp = new URLSearchParams(window.location.href);
 
-  // if the current lookup is already all sections, don't do any more work.
+  // find the "[Set Grid]" link; we will insert new links after it
+  let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
+
+  // if the current lookup is already all sections, don't add the "all sections" link
   if (usp.get("id").split("-").length > 1) {
     allseclink = document.createElement("a");
     allseclink.setAttribute("href", `?type=Roster&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id").split("-")[0]}`);
     allseclink.textContent = "View All Sections";
     allseclink.classList.add("tweaked");
-
-    // find the "[Set Grid]" link, attach new link to end of its containing cell
-    let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
     target.appendChild(document.createTextNode("["));
     target.appendChild(allseclink);
     target.appendChild(document.createTextNode("]"));
   }
+
+  // add "Schedule Grid view" button (type=Course)
+  schedulelink = document.createElement("a");
+  schedulelink.setAttribute("href", `?type=Course&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id")}`);
+  schedulelink.textContent = "Schedule Grid View";
+  schedulelink.classList.add("tweaked");
+  target.appendChild(document.createTextNode("["));
+  target.appendChild(schedulelink);
+  target.appendChild(document.createTextNode("]"));
 }
 
-/* Tweaks for COURSE (all sections) lookup */
+/************************ ROSTER VIEW ******************************** */
+/* Tweaks for COURSE (all sections, Course Grid view) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
 
   // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
@@ -159,6 +172,9 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) 
   //console.log("Set link: " + setlink);
   // parse it
   usp = new URLSearchParams(setlink);
+
+  // find the "[Set Grid]" link; we will insert new links after it
+  let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
 
   leftlink = document.createElement("a");
   leftlink.setAttribute("href", `?type=Course&termcode=${prevQtr(usp.get("termcode"))}&view=tgrid&id=${usp.get("id")}`);
@@ -169,12 +185,28 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) 
   rightlink.textContent = "[ Next Quarter >> ]";
   rightlink.classList.add("tweaked");
 
-  // insert these things just under the "[set grid]" link.
-  let insert_target = QS("tbody > tr > td.bw70");
-  insert_target.appendChild(document.createElement("br"));
-  insert_target.appendChild(leftlink);
-  insert_target.appendChild(rightlink);
 
+  // add "Roster view" button (type=Roster)
+  rosterlink = document.createElement("a");
+  rosterlink.setAttribute("href", `?type=Roster&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id")}`);
+  rosterlink.textContent = "[ Roster View ]";
+  rosterlink.classList.add("tweaked");
+
+  // if the current lookup is not all sections, add the "all sections" link
+  if (usp.get("id").split("-").length > 1) {
+    allseclink = document.createElement("a");
+    allseclink.setAttribute("href", `?type=Course&termcode=${usp.get("termcode")}&view=tgrid&id=${usp.get("id").split("-")[0]}`);
+    allseclink.textContent = "View All Sections";
+    allseclink.classList.add("tweaked");
+    target.appendChild(document.createTextNode("["));
+    target.appendChild(allseclink);
+    target.appendChild(document.createTextNode("]"));
+  }
+
+  //target.appendChild(document.createElement("br"));
+  target.appendChild(rosterlink);
+  target.appendChild(leftlink);
+  target.appendChild(rightlink);
 }
 
 /* Tweaks for main page only */
