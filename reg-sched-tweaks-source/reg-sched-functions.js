@@ -12,6 +12,8 @@
  *  > added ability to press "enter" in search form to trigger username, room, or course lookup
  *  > added prev/next quarter navigation links when viewing all sections of a class in a given term
  *  > added "View All Sections" to options when viewing roster for one section of a course.
+ *  > added "Roster View" button to course grid and "Schedule Grid View" to roster view to easily
+ *     toggle back and forth
  *
  * @version 1.0.1 - 5/30/2024
  * @author Sid Stamm <stammsl@rose-hulman.edu>
