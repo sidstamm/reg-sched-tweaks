@@ -237,6 +237,26 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) 
   setlink.parentNode.appendChild(rightlink);
 }
 
+/************************ USERNAME VIEW ******************************** */
+if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Name: ")) {
+  // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Username&termcode=202510&view=tgrid&id=claassen
+  // steal this in case the request was a POST and not a GET
+  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Download Calendar")[0];
+  seturl = new URL(setlink['href']);
+  seturl.searchParams.set("type", "Username");
+  usp = seturl.searchParams;
+
+  // create prev/next buttons
+  newurl = new URL(seturl);
+  newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
+  leftlink = makeLink(newurl, "<< Previous Quarter");
+  newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
+  rightlink = makeLink(newurl, "Next Quarter >>");
+
+  setlink.parentNode.appendChild(leftlink);
+  setlink.parentNode.appendChild(rightlink);
+}
+
 /************************ MAIN PAGE ******************************** */
 /* Tweaks for main page only */
 if(QS("input[name=id1]")) {
