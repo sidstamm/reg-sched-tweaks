@@ -41,6 +41,9 @@ When installed, this extension modifies the schedule lookup page to have a prett
 * If viewing only one section, a link to view all sections is available
 * A link to view the class meeting schedule (for one or many sections) is available
 
+### When viewing an individual's schedule
+* Previous and Next quarter links available to quickly see the individual's adjacent term schedule.
+
 ### On the "ad-hoc group schedules" page
 <img src="docs/adhoc-schedule-additions.png">
 
