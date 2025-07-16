@@ -71,3 +71,12 @@ web-ext run --keep-profile-changes --firefox-profile=<profilename>
 ```
 
 Or you can use the VS Code "Debugger for Firefox" extension and the `.vscode/launch.json` file provided in this repo.
+
+## Common Issues
+
+### Install Successful, but Incorrect URL
+Did you successfully install the tool, but the blue banner still doesn't show?
+
+Schedule lookup can us a variety of subdomain URLs (e.g., #7 -- https://prodwebxe7-hv.rose-hulman.edu/regweb/). With the current version of this tool, it only works with https://prodwebxe-hv.rose-hulman.edu/regweb/. 
+
+To resolve this issue, delete any numbers after prodwebxe, which should use the correct URL. The banner should now be blue, indicating it's working. 
