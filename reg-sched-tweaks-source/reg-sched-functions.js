@@ -136,17 +136,22 @@ function buildTableObject(dom) {
  */
 function crosslist(description) {
   // try to find the cross listed info in the course description.
+  // it's not very consistent.
+  let possibilities = ["cross-listed w/",
+                       "cross-listed with",
+                       "cross listed w/",
+                       "cross listed with"];
   try {
     description = description.toLowerCase();
-    if(description.includes("cross-listed w/")) {
-      let a = description.indexOf("cross-listed w/");
-      a += 16; // skip over the "cross-listed w/"
-      description = description.substr(a);
-      // consume all chars until a hyphen and two numbers, then remove spaces.
-      const coursere = RegExp(/[A-Z]+\s*[0-9]{3}-[0-9]{1,2}/, "ig");
-      let matches = description.match(coursere);
-      if(matches) {
-        return matches.map(x => x.replace(" ", "").toUpperCase()).join("|");
+    for(let pat of possibilities) {
+      if (description.includes(pat)) {
+        // consume all chars until a hyphen and two numbers, then remove spaces.
+        const coursere = RegExp(/[A-Z]+\s*[0-9]{3}-[0-9]{1,2}/, "ig");
+        let matches = description.substr(description.indexOf(pat))
+                                 .match(coursere);
+        if(matches) {
+          return matches.map(x => x.replace(" ", "").toUpperCase()).join("|");
+        }
       }
     }
   } catch(e) {
