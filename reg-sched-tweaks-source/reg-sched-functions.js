@@ -98,10 +98,39 @@ function makeLink(href, text, braced=true, classes=['tweaked'], attributes={}) {
     return span;
 }
 
+
+/**
+ * Parses an HTML Dom table into an array of dictionaries, assuming the first
+ * row is a header.
+ * 
+ * @param dom - the DOM of the table (use querySelector to find it)
+ * @returns an array of key/value maps based on the text contents of the first row.
+ */
+function buildTableObject(dom) {
+  let result = new Array();
+
+  // parse the header
+  let header = Array.from(dom.querySelector("tr").querySelectorAll("th")).map(n => n.textContent);
+
+  let row = dom.querySelector("tr");
+  while( (row = row.nextElementSibling) && row instanceof HTMLTableRowElement) {
+    // generate an object and push into result.
+    let entry = new Map()
+    let elts = Array.from(row.querySelectorAll("td"));
+    for(let i = 0; i < header.length; i++) {
+      entry.set(header[i], elts[i].textContent);
+    }
+    result.push(entry);
+  }
+  return result;
+}
+
 /**
  * Determines if a class is crosslisted based on the available DOM and finds
  * what other class code is bound to this via cross-list.  
  * 
+ * @param description - a string containin the description of the class.  Should
+ *                      have "crosslisted w/" or similar if it is crosslisted.
  * @returns a string containing another class code (e.g., "CSSE490-02"), or null
  * if not crosslisted.  class is crosslisted with another.
  */
@@ -218,15 +247,20 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
   // we're not already displaying multiple sections.
   if (!seturl.searchParams.get("id").includes("|")) {
     let courserows = QSA("body > p > table > tbody > tr");
-    // TODO: check for "Course" in header row, and make sure to index the right column for description.
-    let firstdesc = courserows[1].children[8].textContent;
-    if (cl = crosslist(firstdesc)) {
-      current_id = seturl.searchParams.get("id");
-      crossid = current_id + "|" + cl;
-      let newurl = new URL(seturl);
-      newurl.searchParams.set("id", crossid)
-      crossseclink = makeLink(newurl, "Show Crosslisted Sections");
-      setlink.parentNode.appendChild(crossseclink);
+    let db = buildTableObject(QS("body > p > table > tbody"));
+    // Quick check for "Course" in header row to make sure that this is the right table.
+    if(db[0].has("Course")) {
+      let firstdesc = db[0].get("Comments");
+      if (cl = crosslist(firstdesc)) {
+        current_id = seturl.searchParams.get("id");
+        crossid = current_id + "|" + cl;
+        let newurl = new URL(seturl);
+        newurl.searchParams.set("id", crossid)
+        crossseclink = makeLink(newurl, "Show Crosslisted Sections");
+        setlink.parentNode.appendChild(crossseclink);
+      }
+    } else {
+      console.log("ERROR in reg-sched-tweaks: crosslist parsing is broken (table parsing).");
     }
   }
 
