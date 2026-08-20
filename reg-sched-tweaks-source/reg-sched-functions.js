@@ -98,6 +98,35 @@ function makeLink(href, text, braced=true, classes=['tweaked'], attributes={}) {
     return span;
 }
 
+/**
+ * Determines if a class is crosslisted based on the available DOM and finds
+ * what other class code is bound to this via cross-list.  
+ * 
+ * @returns a string containing another class code (e.g., "CSSE490-02"), or null
+ * if not crosslisted.  class is crosslisted with another.
+ */
+function crosslist(description) {
+  // try to find the cross listed info in the course description.
+  try {
+    description = description.toLowerCase();
+    if(description.includes("cross-listed w/")) {
+      let a = description.indexOf("cross-listed w/");
+      a += 16; // skip over the "cross-listed w/"
+      description = description.substr(a);
+      // consume all chars until a hyphen and two numbers, then remove spaces.
+      const coursere = RegExp(/[A-Z]+\s*[0-9]{3}-[0-9]{1,2}/, "ig");
+      let matches = description.match(coursere);
+      if(matches) {
+        return matches.map(x => x.replace(" ", "").toUpperCase()).join("|");
+      }
+    }
+  } catch(e) {
+    console.log(e);
+  }
+  // default: no matches.
+  return null;
+}
+
 
 /************************ AD-HOC GROUP SCHEDULES VIEW ******************************** */
 /* Adds UI to select items in the "ad-hoc group schedule" thing.
@@ -184,6 +213,19 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
 
   // find the "[Set Grid]" link; we will insert new links after it
   let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
+
+  // if the course is cross-listed, add the "crosslisted" link.
+  let courserows = QSA("body > p > table > tbody > tr");
+  // TODO: check for "Course" in header row, and make sure to index the right column for description.
+  let firstdesc = courserows[1].children[8].textContent;
+  if (cl = crosslist(firstdesc)) {
+    current_id = seturl.searchParams.get("id");
+    crossid = current_id + "|" + cl;
+    let newurl = new URL(seturl);
+    newurl.searchParams.set("id", crossid)
+    crossseclink = makeLink(newurl, "Show Crosslisted Sections");
+    setlink.parentNode.appendChild(crossseclink);
+  }
 
   // if the current lookup is not already all sections, add the "all sections" link
   if (usp.get("id").split("-").length > 1) {
