@@ -214,17 +214,20 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
   // find the "[Set Grid]" link; we will insert new links after it
   let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
 
-  // if the course is cross-listed, add the "crosslisted" link.
-  let courserows = QSA("body > p > table > tbody > tr");
-  // TODO: check for "Course" in header row, and make sure to index the right column for description.
-  let firstdesc = courserows[1].children[8].textContent;
-  if (cl = crosslist(firstdesc)) {
-    current_id = seturl.searchParams.get("id");
-    crossid = current_id + "|" + cl;
-    let newurl = new URL(seturl);
-    newurl.searchParams.set("id", crossid)
-    crossseclink = makeLink(newurl, "Show Crosslisted Sections");
-    setlink.parentNode.appendChild(crossseclink);
+  // if the course is cross-listed, add the "crosslisted" link.  But only if
+  // we're not already displaying multiple sections.
+  if (!seturl.searchParams.get("id").includes("|")) {
+    let courserows = QSA("body > p > table > tbody > tr");
+    // TODO: check for "Course" in header row, and make sure to index the right column for description.
+    let firstdesc = courserows[1].children[8].textContent;
+    if (cl = crosslist(firstdesc)) {
+      current_id = seturl.searchParams.get("id");
+      crossid = current_id + "|" + cl;
+      let newurl = new URL(seturl);
+      newurl.searchParams.set("id", crossid)
+      crossseclink = makeLink(newurl, "Show Crosslisted Sections");
+      setlink.parentNode.appendChild(crossseclink);
+    }
   }
 
   // if the current lookup is not already all sections, add the "all sections" link
