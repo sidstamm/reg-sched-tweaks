@@ -99,6 +99,76 @@ function makeLink(href, text, braced=true, classes=['tweaked'], attributes={}) {
 }
 
 
+/**
+ * Parses an HTML Dom table into an array of dictionaries, assuming the first
+ * row is a header.
+ * 
+ * @param dom - the DOM of the table (use querySelector to find it)
+ * @returns an array of key/value maps based on the text contents of the first row.
+ */
+function buildTableObject(dom) {
+  let result = new Array();
+
+  // parse the header
+  let header = Array.from(dom.querySelector("tr").querySelectorAll("th")).map(n => n.textContent);
+
+  let row = dom.querySelector("tr");
+  while( (row = row.nextElementSibling) && row instanceof HTMLTableRowElement) {
+    // generate an object and push into result.
+    let entry = new Map()
+    let elts = Array.from(row.querySelectorAll("td"));
+    for(let i = 0; i < header.length; i++) {
+      entry.set(header[i], elts[i].textContent);
+    }
+    result.push(entry);
+  }
+  return result;
+}
+
+/**
+ * Determines if a class is crosslisted based on the available DOM and finds
+ * what other class code is bound to this via cross-list.  
+ * 
+ * @param description - a string containin the description of the class.  Should
+ *                      have "crosslisted w/" or similar if it is crosslisted.
+ * @returns a string containing another class code (e.g., "CSSE490-02"), or null
+ * if not crosslisted.  class is crosslisted with another.
+ */
+function crosslist(description) {
+  // try to find the cross listed info in the course description.
+  // it's not very consistent.
+  let possibilities = ["cross-listed w/",
+                       "cross-listed with",
+                       "cross listed w/",
+                       "cross listed with",
+                       "crosslisted w/",
+                       "crosslisted with"];
+  try {
+    description = description.toLowerCase();
+    for(let pat of possibilities) {
+      if (description.includes(pat)) {
+        // after the "cross listed with" prefix, find all courses.
+        // could be fragile if this is not the last part of the comments (e.g.,
+        // "cross-listed w/ abc123-04 cannot be taken for credit with def456").
+        // Not a common use case, and would require writing a new tokenizer or a
+        // much more complicated regex.
+        const coursere = RegExp(/[A-Z]+\s*[0-9]{3}L?(-[0-9]{1,2})?/, "ig");
+        let matches = description.substr(description.indexOf(pat))
+                                 .match(coursere);
+        if(matches) {
+          return matches.map(x => x.replace(" ", "").toUpperCase()).join("|");
+        }
+        break; //no sense in checking for another "cross list" annotation.
+      }
+    }
+  } catch(e) {
+    console.log(e);
+  }
+  // default: no matches.
+  return null;
+}
+
+
 /************************ AD-HOC GROUP SCHEDULES VIEW ******************************** */
 /* Adds UI to select items in the "ad-hoc group schedule" thing.
  * Also adds show/hide unselected items.
@@ -184,6 +254,27 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
 
   // find the "[Set Grid]" link; we will insert new links after it
   let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
+
+  // if the course is cross-listed, add the "crosslisted" link.  But only if
+  // we're not already displaying multiple sections.
+  if (!seturl.searchParams.get("id").includes("|")) {
+    let courserows = QSA("body > p > table > tbody > tr");
+    let db = buildTableObject(QS("body > p > table > tbody"));
+    // Quick check for "Course" in header row to make sure that this is the right table.
+    if(db[0].has("Course")) {
+      let firstdesc = db[0].get("Comments");
+      if (cl = crosslist(firstdesc)) {
+        current_id = seturl.searchParams.get("id");
+        crossid = current_id + "|" + cl;
+        let newurl = new URL(seturl);
+        newurl.searchParams.set("id", crossid)
+        crossseclink = makeLink(newurl, "Show Crosslisted Sections");
+        setlink.parentNode.appendChild(crossseclink);
+      }
+    } else {
+      console.log("ERROR in reg-sched-tweaks: crosslist parsing is broken (table parsing).");
+    }
+  }
 
   // if the current lookup is not already all sections, add the "all sections" link
   if (usp.get("id").split("-").length > 1) {
