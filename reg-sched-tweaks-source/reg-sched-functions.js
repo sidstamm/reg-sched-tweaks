@@ -146,7 +146,7 @@ function crosslist(description) {
     for(let pat of possibilities) {
       if (description.includes(pat)) {
         // consume all chars until a hyphen and two numbers, then remove spaces.
-        const coursere = RegExp(/[A-Z]+\s*[0-9]{3}-[0-9]{1,2}/, "ig");
+        const coursere = RegExp(/[A-Z]+\s*[0-9]{3}(-[0-9]{1,2})?/, "ig");
         let matches = description.substr(description.indexOf(pat))
                                  .match(coursere);
         if(matches) {
