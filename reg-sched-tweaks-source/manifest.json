@@ -1,23 +1,28 @@
 {
   "manifest_version": 3,
   "name": "reg-sched tweaks",
-  "version": "1.0.2",
+  "version": "1.0.3",
 
   "browser_specific_settings": {
     "gecko": {
       "id": "regschedtweaks@rose-hulman.edu",
-      "strict_min_version": "100.0",
-      "update_url": "https://www.rose-hulman.edu/~stammsl/rst/update.json"
+      "strict_min_version": "115.0",
+      "update_url": "https://www.rose-hulman.edu/~stammsl/rst/update.json",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   },
 
   "host_permissions": [
-      "*://prodwebxe-hv.rose-hulman.edu/regweb-cgi/*"
+      "*://*.rose-hulman.edu/regweb-cgi/*"
   ],
 
   "content_scripts": [
     {
-      "matches": ["https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/*"],
+      "matches": ["https://*.rose-hulman.edu/regweb-cgi/*"],
       "all_frames": true,
       "js": ["reg-sched-functions.js"],
       "css": ["reg-sched.css"]
