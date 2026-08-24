@@ -140,7 +140,9 @@ function crosslist(description) {
   let possibilities = ["cross-listed w/",
                        "cross-listed with",
                        "cross listed w/",
-                       "cross listed with"];
+                       "cross listed with",
+                       "crosslisted w/",
+                       "crosslisted with"];
   try {
     description = description.toLowerCase();
     for(let pat of possibilities) {
@@ -148,13 +150,15 @@ function crosslist(description) {
         // after the "cross listed with" prefix, find all courses.
         // could be fragile if this is not the last part of the comments (e.g.,
         // "cross-listed w/ abc123-04 cannot be taken for credit with def456").
-        // Not a common use case, and would require writing a new tokenizer or a much more complicated regex.
-        const coursere = RegExp(/[A-Z]+\s*[0-9]{3}(-[0-9]{1,2})?/, "ig");
+        // Not a common use case, and would require writing a new tokenizer or a
+        // much more complicated regex.
+        const coursere = RegExp(/[A-Z]+\s*[0-9]{3}L?(-[0-9]{1,2})?/, "ig");
         let matches = description.substr(description.indexOf(pat))
                                  .match(coursere);
         if(matches) {
           return matches.map(x => x.replace(" ", "").toUpperCase()).join("|");
         }
+        break; //no sense in checking for another "cross list" annotation.
       }
     }
   } catch(e) {
