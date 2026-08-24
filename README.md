@@ -40,6 +40,7 @@ When installed, this extension modifies the schedule lookup page to have a prett
 
 * If viewing only one section, a link to view all sections is available
 * A link to view the class meeting schedule (for one or many sections) is available
+* If the class is crosslisted with others, a "Show Crosslisted Sections" link is available.  NOTE: the crosslist info is unstructured and may be fragile.  *Please [report issues](https://github.com/sidstamm/reg-sched-tweaks/issues/new) if this functionality breaks.*
 
 ### When viewing an individual's schedule
 * Previous and Next quarter links available to quickly see the individual's adjacent term schedule.
