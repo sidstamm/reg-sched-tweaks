@@ -56,21 +56,26 @@ When installed, this extension modifies the schedule lookup page to have a prett
 ## Development
 Some information about developing extensions and testing them is [here](https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/#testing-out-an-extension)
 
-You'll probably want to install Node.js, and then use the `web-ext` node package to configure and run.
+### Using VS Code and Firefox
+The easiest thing to do is use VS Code and Firefox to debug.
 
-### Setup
+- Install the "Debugger for Firefox" VS Code Extension"
+- Clone this repo and open it in VS Code
+- Execute "Run -> Start Debugging" (F5) to launch Firefox and debug the code in the repo.  This uses the [`.vscode/launch.json`](.vscode/launch.json) debugger config in this repo.
+
+### Using Node.js and `web-ext`
+If you'd prefer to use a CLI, you'll probably want to install Node.js, and then use the `web-ext` node package to configure and run.
+
 Install Node.js and web-ext.  Then, create a Firefox profile for testing, using the profile management screen:
 
 - on linux/mac: `firefox --no-remote -P`
 - on windows powershell: `& 'C:\Program Files\Mozilla Firefox\firefox.exe' --no-remote -P`
 
-### Running to debug
+#### Running web-ext to debug
 Once a profile is created, use web-ext to run it:
 ```
 web-ext run --keep-profile-changes --firefox-profile=<profilename>
 ```
-
-Or you can use the VS Code "Debugger for Firefox" extension and the `.vscode/launch.json` file provided in this repo.
 
 ## Common Issues
 
