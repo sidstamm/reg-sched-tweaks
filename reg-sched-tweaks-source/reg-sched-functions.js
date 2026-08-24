@@ -145,7 +145,10 @@ function crosslist(description) {
     description = description.toLowerCase();
     for(let pat of possibilities) {
       if (description.includes(pat)) {
-        // consume all chars until a hyphen and two numbers, then remove spaces.
+        // after the "cross listed with" prefix, find all courses.
+        // could be fragile if this is not the last part of the comments (e.g.,
+        // "cross-listed w/ abc123-04 cannot be taken for credit with def456").
+        // Not a common use case, and would require writing a new tokenizer or a much more complicated regex.
         const coursere = RegExp(/[A-Z]+\s*[0-9]{3}(-[0-9]{1,2})?/, "ig");
         let matches = description.substr(description.indexOf(pat))
                                  .match(coursere);
