@@ -33,6 +33,8 @@ const GROUP_SELECTION_INSTRUCTIONS = `
 </div>
 `;
 
+const ARGOS_PHOTOS_URL = "https://reporter.rose-hulman.edu/mw/File.Get?Path=%5C%5Cbannershare%5CIDPhotos%5C"; // +id+".jpg";
+
 const GET_PARAMS = new URLSearchParams(window.location.href);
 
 // some helpers
@@ -168,6 +170,46 @@ function crosslist(description) {
   return null;
 }
 
+/**
+ * Creates (and returns) an on/off callback for showing photos in a table.
+ * @param {HTMLTableElement} tableElement  - the table where you want to add the photos
+ * @param {int} bannerid_col  - the column of the table that contains the banner id number of the subjects.
+ * @returns a callback
+ */
+function createLoadPhotosCallback(tableElement, bannerid_col) {
+  return function() {
+    if(tableElement.hasAttribute("hasPhotos")) {
+      // if they're loaded already, unload them.
+      let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
+      for (let r of participant_table_rows) {
+        let td = r.querySelector("td.photo");
+        if (td) { r.removeChild(td); }
+      }
+      tableElement.removeAttribute("hasphotos");
+    } else {
+      // Load the photos
+      tableElement.setAttribute("hasphotos", "true");
+      let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
+      // skip header (that's why i starts at 1)
+      for (let i = 1; i < participant_table_rows.length; i++) {
+        let id = participant_table_rows[i].querySelector("td:nth-of-type(" + bannerid_col + ")").textContent;
+        let e = document.createElement("img");
+        e.src = ARGOS_PHOTOS_URL + id + ".jpg";
+        e.setAttribute("width", "32px");
+        let a = document.createElement("a");
+        a.href=e.src + "&Content-Disposition=inline";
+        a.setAttribute("target", "_blank");
+        a.style = "border:0px;"
+        a.appendChild(e);
+        let td = document.createElement("td");
+        td.classList.add("photo");
+        td.appendChild(a);
+        participant_table_rows[i].appendChild(td);
+      }
+    }
+  } 
+}
+
 
 /************************ AD-HOC GROUP SCHEDULES VIEW ******************************** */
 /* Adds UI to select items in the "ad-hoc group schedule" thing.
@@ -290,6 +332,15 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
   newurl.searchParams.set("type","Course");
   schedulelink = makeLink(newurl, "Schedule Grid View");
   target.appendChild(schedulelink);
+
+  // add photo column to participants table
+  let participant_table_rows = QSA("body > p:nth-of-type(2) > table > tbody > tr");
+  let photo_header = document.createElement("th");
+  photo_header.textContent = "📷";
+  photo_header.title = "show photos";
+
+  photo_header.onclick = createLoadPhotosCallback(QS("body > p:nth-of-type(2) > table"), 3);
+  participant_table_rows[0].appendChild(photo_header);
 }
 
 /************************ COURSE VIEW ******************************** */
