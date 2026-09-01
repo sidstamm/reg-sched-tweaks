@@ -210,11 +210,20 @@ function createLoadPhotosCallback(tableElement, bannerid_col) {
   } 
 }
 
+/*************************************** GLOBALLY USEFUL VARS ********************************************** */
+// find the "setlink" in case this was a post; can't rely on querystring.
+// FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
+let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Download Calendar")[0];
+if (!setlink) {
+  setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
+}
 
 /************************ AD-HOC GROUP SCHEDULES VIEW ******************************** */
 /* Adds UI to select items in the "ad-hoc group schedule" thing.
  * Also adds show/hide unselected items.
  */
+// fixes error that shows up in the console.
+window.disableSubmitButton = function(x) { console.log("wrapped erroneous disable function.");}
 if (QS("select#id6")) {
   let selx = QS("select#id6");
 
@@ -285,14 +294,13 @@ if (QS("select#id6")) {
 
 
 /************************ ROSTER VIEW ******************************** */
-/* Tweaks for COURSE ID (ONE section, Roster View) lookup */
+/* Tweaks for COURSE ID (ONE section or MULTIPLE sections, Roster View) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: ")) {
   // get parameters from URL.  //usp = new URL(window.location.href).searchParams;
-  // steal this in case the request was a POST and not a GET
-  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
-  seturl = new URL(setlink['href']);
+  // setlink is populated above.
+  let seturl = new URL(setlink['href']);
   seturl.searchParams.set("type", "Roster");
-  usp = seturl.searchParams;
+  let usp = seturl.searchParams;
 
   // find the "[Set Grid]" link; we will insert new links after it
   let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
@@ -303,7 +311,9 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
     let courserows = QSA("body > p > table > tbody > tr");
     let db = buildTableObject(QS("body > p > table > tbody"));
     // Quick check for "Course" in header row to make sure that this is the right table.
-    if(db[0].has("Course")) {
+    if(!db || db.length <= 0) {
+      // nothing to do, there are no entries here (probably a "no result search")
+    } else if(db[0].has("Course")) {
       let firstdesc = db[0].get("Comments");
       if (cl = crosslist(firstdesc)) {
         current_id = seturl.searchParams.get("id");
@@ -333,6 +343,16 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
   schedulelink = makeLink(newurl, "Schedule Grid View");
   target.appendChild(schedulelink);
 
+  // create prev/next buttons
+  newurl = new URL(seturl);
+  newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
+  leftlink = makeLink(newurl, "<< Previous Quarter");
+  newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
+  rightlink = makeLink(newurl, "Next Quarter >>");
+
+  target.appendChild(leftlink);
+  target.appendChild(rightlink);
+
   // add photo column to participants table
   let participant_table_rows = QSA("body > p:nth-of-type(2) > table > tbody > tr");
   let photo_header = document.createElement("th");
@@ -344,6 +364,7 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
 }
 
 /************************ ADVISOR ROSTER VIEW ******************************** */
+// this is a variant of "User"
 if(QS("tr > td.wr100") && QS("tr > td.wr100").textContent.startsWith("Advisor Roster - ")) {
   // add photo column to participants table
   let participant_table_rows = QSA("body > p:nth-of-type(2) > table > tbody > tr");
@@ -360,11 +381,10 @@ if(QS("tr > td.wr100") && QS("tr > td.wr100").textContent.startsWith("Advisor Ro
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
 
   // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
-  // steal this in case the request was a POST and not a GET
-  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
-  seturl = new URL(setlink['href']);
+  // setlink is populated above.
+  let seturl = new URL(setlink['href']);
   seturl.searchParams.set("type", "Course");
-  usp = seturl.searchParams;
+  let usp = seturl.searchParams;
 
   // add "Roster view" button (type=Roster)
   newurl = new URL(seturl);
@@ -393,22 +413,23 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) 
 
 /************************ USERNAME VIEW ******************************** */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Name: ")) {
-  // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Username&termcode=202510&view=tgrid&id=claassen
-  // steal this in case the request was a POST and not a GET
-  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Download Calendar")[0];
-  seturl = new URL(setlink['href']);
+  // setlink is populated above.
+  let seturl = new URL(setlink['href']);
   seturl.searchParams.set("type", "Username");
-  usp = seturl.searchParams;
+  let usp = seturl.searchParams;
 
   // create prev/next buttons
-  newurl = new URL(seturl);
-  newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
-  leftlink = makeLink(newurl, "<< Previous Quarter");
-  newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
-  rightlink = makeLink(newurl, "Next Quarter >>");
+  // (but only if not an advisor roster, that's strange.)
+  if(!QS("tr > td.wr100") || !QS("tr > td.wr100").textContent.startsWith("Advisor Roster")) {
+    newurl = new URL(seturl);
+    newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
+    leftlink = makeLink(newurl, "<< Previous Quarter");
+    newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
+    rightlink = makeLink(newurl, "Next Quarter >>");
 
-  setlink.parentNode.appendChild(leftlink);
-  setlink.parentNode.appendChild(rightlink);
+    setlink.parentNode.appendChild(leftlink);
+    setlink.parentNode.appendChild(rightlink);
+  }
 }
 
 /************************ MAIN PAGE ******************************** */
