@@ -343,6 +343,18 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
   participant_table_rows[0].appendChild(photo_header);
 }
 
+/************************ ADVISOR ROSTER VIEW ******************************** */
+if(QS("tr > td.wr100") && QS("tr > td.wr100").textContent.startsWith("Advisor Roster - ")) {
+  // add photo column to participants table
+  let participant_table_rows = QSA("body > p:nth-of-type(2) > table > tbody > tr");
+  let photo_header = document.createElement("th");
+  photo_header.textContent = "📷";
+  photo_header.title = "show photos";
+
+  photo_header.onclick = createLoadPhotosCallback(QS("body > p:nth-of-type(2) > table"), 3);
+  participant_table_rows[0].appendChild(photo_header);
+}
+
 /************************ COURSE VIEW ******************************** */
 /* Tweaks for COURSE (all sections, Course Grid view) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
