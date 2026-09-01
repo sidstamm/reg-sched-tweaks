@@ -170,43 +170,85 @@ function crosslist(description) {
   return null;
 }
 
+
+/**
+ *  Checks if access to Argos (photos source) is responding and authenticated.
+ *  This is a little hacky since it relies on a succeed/failure state of loading
+ *  an image.  :(
+ *  
+ *  @returns a promise that resolves if it is available, and rejects if not.
+ */
+function canAccessArgos() {
+  let e = document.createElement("img");
+  e.style.visibility = "hidden";
+  return new Promise((resolve, reject) => {
+    // Attempt to load an image in a hidden way and catch errors.
+    e.src = ARGOS_PHOTOS_URL + "800116326" + ".jpg";
+
+    e.onload  = () => { document.body.removeChild(e); resolve('test succeeded'); }
+    e.onerror = () => { document.body.removeChild(e); reject('test failed'); }
+
+    document.body.appendChild(e);
+  });
+}
+
 /**
  * Creates (and returns) an on/off callback for showing photos in a table.
+ * This first checks if an Argos session is open so the images can be accessed.
+ * If not, it will not try to load images.
+ * 
  * @param {HTMLTableElement} tableElement  - the table where you want to add the photos
  * @param {int} bannerid_col  - the column of the table that contains the banner id number of the subjects.
  * @returns a callback
  */
 function createLoadPhotosCallback(tableElement, bannerid_col) {
   return function() {
-    if(tableElement.hasAttribute("hasPhotos")) {
-      // if they're loaded already, unload them.
-      let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
-      for (let r of participant_table_rows) {
-        let td = r.querySelector("td.photo");
-        if (td) { r.removeChild(td); }
+    canAccessArgos().then(
+      // This is the "resolve" callback (images can be loaded).
+      (m) => {
+        console.log(m);
+        if(tableElement.hasAttribute("hasPhotos")) {
+          // if they're loaded already, unload them.
+          let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
+          for (let r of participant_table_rows) {
+            let td = r.querySelector("td.photo");
+            if (td) { r.removeChild(td); }
+          }
+          tableElement.removeAttribute("hasphotos");
+        } else {
+          // Load the photos
+          tableElement.setAttribute("hasphotos", "true");
+          let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
+          // skip header (that's why i starts at 1)
+          for (let i = 1; i < participant_table_rows.length; i++) {
+            let id = participant_table_rows[i].querySelector("td:nth-of-type(" + bannerid_col + ")").textContent;
+            let e = document.createElement("img");
+            e.src = ARGOS_PHOTOS_URL + id + ".jpg";
+            e.setAttribute("width", "32px");
+            let a = document.createElement("a");
+            a.href=e.src + "&Content-Disposition=inline";
+            a.setAttribute("target", "_blank");
+            a.style = "border:0px;"
+            a.appendChild(e);
+            let td = document.createElement("td");
+            td.classList.add("photo");
+            td.appendChild(a);
+            participant_table_rows[i].appendChild(td);
+          }
+        }
+      },
+
+      // This is the "reject" callback (images can NOT be loaded).
+      (m) => {
+        if(confirm("Can't load images.  Please log into ArgosWeb first.\n\n "
+              + "NOTE: This requires you are on the VPN and currently "
+              + "authenticated to ARGOS with current RHIT credentials.\n\n"
+              + "Click OK to open Argos now (or cancel to skip it).")) {
+                window.open("https://reporter.rose-hulman.edu/Argos/AWV/");
+              }
+        console.log(m);
       }
-      tableElement.removeAttribute("hasphotos");
-    } else {
-      // Load the photos
-      tableElement.setAttribute("hasphotos", "true");
-      let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
-      // skip header (that's why i starts at 1)
-      for (let i = 1; i < participant_table_rows.length; i++) {
-        let id = participant_table_rows[i].querySelector("td:nth-of-type(" + bannerid_col + ")").textContent;
-        let e = document.createElement("img");
-        e.src = ARGOS_PHOTOS_URL + id + ".jpg";
-        e.setAttribute("width", "32px");
-        let a = document.createElement("a");
-        a.href=e.src + "&Content-Disposition=inline";
-        a.setAttribute("target", "_blank");
-        a.style = "border:0px;"
-        a.appendChild(e);
-        let td = document.createElement("td");
-        td.classList.add("photo");
-        td.appendChild(a);
-        participant_table_rows[i].appendChild(td);
-      }
-    }
+    );
   } 
 }
 
