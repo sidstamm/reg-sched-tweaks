@@ -14,8 +14,9 @@
  *  > added "View All Sections" to options when viewing roster for one section of a course.
  *  > added "Roster View" button to course grid and "Schedule Grid View" to roster view to easily
  *     toggle back and forth
+ *  > added support to show rosters and grid views for cross-listed classes
  *
- * @version 1.0.1 - 5/30/2024
+ * @version 1.0.3 - 8/24/2026
  * @author Sid Stamm <stammsl@rose-hulman.edu>
  ***************************/
 
@@ -185,8 +186,8 @@ function canAccessArgos() {
     // Attempt to load an image in a hidden way and catch errors.
     e.src = ARGOS_PHOTOS_URL + "800116326" + ".jpg";
 
-    e.onload  = () => { document.body.removeChild(e); resolve('test succeeded'); }
-    e.onerror = () => { document.body.removeChild(e); reject('test failed'); }
+    e.onload  = () => { document.body.removeChild(e); resolve('Argos available - can load images.'); }
+    e.onerror = () => { document.body.removeChild(e); reject('Argos session not active.'); }
 
     document.body.appendChild(e);
   });
@@ -206,7 +207,7 @@ function createLoadPhotosCallback(tableElement, bannerid_col) {
     canAccessArgos().then(
       // This is the "resolve" callback (images can be loaded).
       (m) => {
-        console.log(m);
+        //console.log(m);
         if(tableElement.hasAttribute("hasPhotos")) {
           // if they're loaded already, unload them.
           let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
