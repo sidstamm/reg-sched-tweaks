@@ -42,6 +42,15 @@ When installed, this extension modifies the schedule lookup page to have a prett
 * A link to view the class meeting schedule (for one or many sections) is available
 * If the class is crosslisted with others, a "Show Crosslisted Sections" link is available.  NOTE: the crosslist info is unstructured and may be fragile.  *Please [report issues](https://github.com/sidstamm/reg-sched-tweaks/issues/new) if this functionality breaks.*
 
+You can also load pictures of students next to their entry in a roster view:
+
+  <img src="docs/roster-photos-populated.png">
+
+1. Find the small camera emoji ("📷") and click it.
+2. If you're not logged into the Argos reporting tool, you will be prompted to log in.  This will open the tool in a new window.
+3. Once authenticated, photos will load.
+4. Click the camera again to hide the photos.
+
 ### When viewing an individual's schedule
 * Previous and Next quarter links available to quickly see the individual's adjacent term schedule.
 

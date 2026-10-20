@@ -14,8 +14,9 @@
  *  > added "View All Sections" to options when viewing roster for one section of a course.
  *  > added "Roster View" button to course grid and "Schedule Grid View" to roster view to easily
  *     toggle back and forth
+ *  > added support to show rosters and grid views for cross-listed classes
  *
- * @version 1.0.1 - 5/30/2024
+ * @version 1.0.3 - 8/24/2026
  * @author Sid Stamm <stammsl@rose-hulman.edu>
  ***************************/
 
@@ -32,6 +33,8 @@ const GROUP_SELECTION_INSTRUCTIONS = `
 </ul>
 </div>
 `;
+
+const ARGOS_PHOTOS_URL = "https://reporter.rose-hulman.edu/mw/File.Get?Path=%5C%5Cbannershare%5CIDPhotos%5C"; // +id+".jpg";
 
 const GET_PARAMS = new URLSearchParams(window.location.href);
 
@@ -169,10 +172,101 @@ function crosslist(description) {
 }
 
 
+/**
+ *  Checks if access to Argos (photos source) is responding and authenticated.
+ *  This is a little hacky since it relies on a succeed/failure state of loading
+ *  an image.  :(
+ *  
+ *  @returns a promise that resolves if it is available, and rejects if not.
+ */
+function canAccessArgos() {
+  let e = document.createElement("img");
+  e.style.visibility = "hidden";
+  return new Promise((resolve, reject) => {
+    // Attempt to load an image in a hidden way and catch errors.
+    e.src = ARGOS_PHOTOS_URL + "800116326" + ".jpg";
+
+    e.onload  = () => { document.body.removeChild(e); resolve('Argos available - can load images.'); }
+    e.onerror = () => { document.body.removeChild(e); reject('Argos session not active.'); }
+
+    document.body.appendChild(e);
+  });
+}
+
+/**
+ * Creates (and returns) an on/off callback for showing photos in a table.
+ * This first checks if an Argos session is open so the images can be accessed.
+ * If not, it will not try to load images.
+ * 
+ * @param {HTMLTableElement} tableElement  - the table where you want to add the photos
+ * @param {int} bannerid_col  - the column of the table that contains the banner id number of the subjects.
+ * @returns a callback
+ */
+function createLoadPhotosCallback(tableElement, bannerid_col) {
+  return function() {
+    canAccessArgos().then(
+      // This is the "resolve" callback (images can be loaded).
+      (m) => {
+        //console.log(m);
+        if(tableElement.hasAttribute("hasPhotos")) {
+          // if they're loaded already, unload them.
+          let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
+          for (let r of participant_table_rows) {
+            let td = r.querySelector("td.photo");
+            if (td) { r.removeChild(td); }
+          }
+          tableElement.removeAttribute("hasphotos");
+        } else {
+          // Load the photos
+          tableElement.setAttribute("hasphotos", "true");
+          let participant_table_rows = tableElement.querySelectorAll("tbody > tr");
+          // skip header (that's why i starts at 1)
+          for (let i = 1; i < participant_table_rows.length; i++) {
+            let id = participant_table_rows[i].querySelector("td:nth-of-type(" + bannerid_col + ")").textContent;
+            let e = document.createElement("img");
+            e.src = ARGOS_PHOTOS_URL + id + ".jpg";
+            e.setAttribute("width", "32px");
+            let a = document.createElement("a");
+            a.href=e.src + "&Content-Disposition=inline";
+            a.setAttribute("target", "_blank");
+            a.style = "border:0px;"
+            a.appendChild(e);
+            let td = document.createElement("td");
+            td.classList.add("photo");
+            td.appendChild(a);
+            participant_table_rows[i].appendChild(td);
+          }
+        }
+      },
+
+      // This is the "reject" callback (images can NOT be loaded).
+      (m) => {
+        if(confirm("Can't load images.  Please log into ArgosWeb first.\n\n "
+              + "NOTE: This requires you are on the VPN and currently "
+              + "authenticated to ARGOS with current RHIT credentials.\n\n"
+              + "Click OK to open Argos now (or cancel to skip it).")) {
+                window.open("https://reporter.rose-hulman.edu/Argos/AWV/");
+              }
+        console.log(m);
+      }
+    );
+  } 
+}
+
+/*************************************** GLOBALLY USEFUL VARS ********************************************** */
+// find the "setlink" in case this was a post; can't rely on querystring.
+// FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
+let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Download Calendar")[0];
+if (!setlink) {
+  setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
+}
+
 /************************ AD-HOC GROUP SCHEDULES VIEW ******************************** */
 /* Adds UI to select items in the "ad-hoc group schedule" thing.
  * Also adds show/hide unselected items.
  */
+// fixes error that shows up in the console.
+window.disableSubmitButton = function(x) { console.log("wrapped erroneous disable function.");}
 if (QS("select#id6")) {
   let selx = QS("select#id6");
 
@@ -243,14 +337,13 @@ if (QS("select#id6")) {
 
 
 /************************ ROSTER VIEW ******************************** */
-/* Tweaks for COURSE ID (ONE section, Roster View) lookup */
+/* Tweaks for COURSE ID (ONE section or MULTIPLE sections, Roster View) lookup */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: ")) {
   // get parameters from URL.  //usp = new URL(window.location.href).searchParams;
-  // steal this in case the request was a POST and not a GET
-  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
-  seturl = new URL(setlink['href']);
+  // setlink is populated above.
+  let seturl = new URL(setlink['href']);
   seturl.searchParams.set("type", "Roster");
-  usp = seturl.searchParams;
+  let usp = seturl.searchParams;
 
   // find the "[Set Grid]" link; we will insert new links after it
   let target = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0].parentNode;
@@ -261,7 +354,9 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
     let courserows = QSA("body > p > table > tbody > tr");
     let db = buildTableObject(QS("body > p > table > tbody"));
     // Quick check for "Course" in header row to make sure that this is the right table.
-    if(db[0].has("Course")) {
+    if(!db || db.length <= 0) {
+      // nothing to do, there are no entries here (probably a "no result search")
+    } else if(db[0].has("Course")) {
       let firstdesc = db[0].get("Comments");
       if (cl = crosslist(firstdesc)) {
         current_id = seturl.searchParams.get("id");
@@ -290,6 +385,38 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
   newurl.searchParams.set("type","Course");
   schedulelink = makeLink(newurl, "Schedule Grid View");
   target.appendChild(schedulelink);
+
+  // create prev/next buttons
+  newurl = new URL(seturl);
+  newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
+  leftlink = makeLink(newurl, "<< Previous Quarter");
+  newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
+  rightlink = makeLink(newurl, "Next Quarter >>");
+
+  target.appendChild(leftlink);
+  target.appendChild(rightlink);
+
+  // add photo column to participants table
+  let participant_table_rows = QSA("body > p:nth-of-type(2) > table > tbody > tr");
+  let photo_header = document.createElement("th");
+  photo_header.textContent = "📷";
+  photo_header.title = "show photos";
+
+  photo_header.onclick = createLoadPhotosCallback(QS("body > p:nth-of-type(2) > table"), 3);
+  participant_table_rows[0].appendChild(photo_header);
+}
+
+/************************ ADVISOR ROSTER VIEW ******************************** */
+// this is a variant of "User"
+if(QS("tr > td.wr100") && QS("tr > td.wr100").textContent.startsWith("Advisor Roster - ")) {
+  // add photo column to participants table
+  let participant_table_rows = QSA("body > p:nth-of-type(2) > table > tbody > tr");
+  let photo_header = document.createElement("th");
+  photo_header.textContent = "📷";
+  photo_header.title = "show photos";
+
+  photo_header.onclick = createLoadPhotosCallback(QS("body > p:nth-of-type(2) > table"), 3);
+  participant_table_rows[0].appendChild(photo_header);
 }
 
 /************************ COURSE VIEW ******************************** */
@@ -297,11 +424,10 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course ID: "
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) {
 
   // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Course&termcode=202510&view=tgrid&id=CSSE232
-  // steal this in case the request was a POST and not a GET
-  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Set Grid")[0];
-  seturl = new URL(setlink['href']);
+  // setlink is populated above.
+  let seturl = new URL(setlink['href']);
   seturl.searchParams.set("type", "Course");
-  usp = seturl.searchParams;
+  let usp = seturl.searchParams;
 
   // add "Roster view" button (type=Roster)
   newurl = new URL(seturl);
@@ -330,22 +456,23 @@ if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Course: ")) 
 
 /************************ USERNAME VIEW ******************************** */
 if(QS("tr > td.bw80") && QS("tr > td.bw80").textContent.startsWith("Name: ")) {
-  // FORMAT: https://prodwebxe-hv.rose-hulman.edu/regweb-cgi/reg-sched.pl?type=Username&termcode=202510&view=tgrid&id=claassen
-  // steal this in case the request was a POST and not a GET
-  let setlink = [...QSA("tbody > tr > td.bw70 > a")].filter((v) => v.textContent == "Download Calendar")[0];
-  seturl = new URL(setlink['href']);
+  // setlink is populated above.
+  let seturl = new URL(setlink['href']);
   seturl.searchParams.set("type", "Username");
-  usp = seturl.searchParams;
+  let usp = seturl.searchParams;
 
   // create prev/next buttons
-  newurl = new URL(seturl);
-  newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
-  leftlink = makeLink(newurl, "<< Previous Quarter");
-  newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
-  rightlink = makeLink(newurl, "Next Quarter >>");
+  // (but only if not an advisor roster, that's strange.)
+  if(!QS("tr > td.wr100") || !QS("tr > td.wr100").textContent.startsWith("Advisor Roster")) {
+    newurl = new URL(seturl);
+    newurl.searchParams.set("termcode", prevQtr(usp.get("termcode")));
+    leftlink = makeLink(newurl, "<< Previous Quarter");
+    newurl.searchParams.set("termcode", nextQtr(usp.get("termcode")));
+    rightlink = makeLink(newurl, "Next Quarter >>");
 
-  setlink.parentNode.appendChild(leftlink);
-  setlink.parentNode.appendChild(rightlink);
+    setlink.parentNode.appendChild(leftlink);
+    setlink.parentNode.appendChild(rightlink);
+  }
 }
 
 /************************ MAIN PAGE ******************************** */
